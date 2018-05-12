@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -ex
 
-prepare(){
-	npm init
+run(){
+	. .envrc
+	npm start
 }
 
 $@

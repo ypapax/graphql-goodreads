@@ -1,10 +1,42 @@
 const fetch = require('node-fetch')
 const util = require('util')
 const parseXML = util.promisify(require('xml2js').parseString)
+const {
+    GraphQLSchema,
+    GraphQLObjectType,
+    GraphQLInt,
+    GraphQLString
+} = require('graphql')
+const logger = require('tracer').colorConsole();
+
+const apiKey=process.env.GOOD_READS_API_KEY
+logger.info("apiKey", apiKey);
 // api key can be generated here https://www.goodreads.com/api/keys
-const x = fetch(
-    'https://www.goodreads.com/author/show.xml?id=4432&key=NsLXXc9qa7gXA5m5N83PYA'
+/*fetch(
+    'https://www.goodreads.com/author/show.xml?id=4432&key='+apiKey
 )
     .then(response => response.text())
-    .then(parseXML)
-x
+    .then(parseXML)*/
+const AuthorType = new GraphQLObjectType({
+    name: "Author",
+    description: "...",
+    fields: ()=>({
+        name: {
+            type: GraphQLString
+        }
+    })
+})
+module.exports = new GraphQLSchema({
+    query: new GraphQLObjectType({
+        name: 'Query',
+        description: '...',
+        fields: () => ({
+          author: {
+              type: AuthorType,
+              args: {
+                  id: {type: GraphQLInt}
+              }
+          }
+        })
+    })
+})
