@@ -22,8 +22,9 @@ const AuthorType = new GraphQLObjectType({
     description: "...",
     fields: () => ({
         name: {
-            type: GraphQLString
-        }
+            type: GraphQLString,
+            resolve: xml => xml.GoodreadsResponse.author[0].name[0]
+        },
     })
 })
 module.exports = new GraphQLSchema({
