@@ -12,18 +12,52 @@ const logger = require('tracer').colorConsole();
 
 const apiKey = process.env.GOOD_READS_API_KEY
 logger.info("apiKey", apiKey);
+
 // api key can be generated here https://www.goodreads.com/api/keys
+
+function translate(lang, str) {
+    // Google Translate API is a paid (but dirt cheap) service. This is my key
+    // and will be disabled by the time the video is out. To generate your own,
+    // go here: https://cloud.google.com/translate/v2/getting_started
+    const apiKey =
+        process.env.GOOGLE_TRANSLATE_API_KEY;
+    if (!apiKey) {
+        logger.error("missing API key");
+        return "missing API key";
+    }
+    const url =
+        'https://www.googleapis.com' +
+        '/language/translate/v2' +
+        '?key=' + apiKey +
+        '&source=en' +
+        '&target=' + lang +
+        '&q=' + encodeURIComponent(str)
+    logger.info("requesting", url)
+    const promise = fetch(url)
+        .then(response => response.json())
+        .then(parsedResponse =>
+            parsedResponse
+                .data
+                .translations[0]
+                .translatedText
+        )
+    return promise
+}
+
 const BookType = new GraphQLObjectType({
     name: 'Book',
     description: '...',
     fields: () => ({
         title: {
             type: GraphQLString,
-            resolve: xml => {
+            args: {
+                lang: {type: GraphQLString}
+            },
+            resolve: (xml, args) => {
                 logger.info("book title xml", JSON.stringify(xml, null, "\t"))
-                const title=xml.GoodreadsResponse.book[0].title[0]
-                logger.info("book title", title)
-                return title;
+                const title = xml.GoodreadsResponse.book[0].title[0]
+                logger.info("book title", title, "args", args)
+                return args.lang ? translate(args.lang, title) : title;
             }
         },
         isbn: {
