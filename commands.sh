@@ -2,7 +2,8 @@
 set -ex
 
 run(){
-	. .envrc
+	# .envrc file is not added to repo
+	. .envrc #export GOOD_READS_API_KEY
 	npm start
 }
 
