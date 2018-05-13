@@ -13,22 +13,27 @@ const logger = require('tracer').colorConsole();
 const apiKey = process.env.GOOD_READS_API_KEY
 logger.info("apiKey", apiKey);
 // api key can be generated here https://www.goodreads.com/api/keys
-/*fetch(
-    'https://www.goodreads.com/author/show.xml?id=4432&key='+apiKey
-)
-    .then(response => response.text())
-    .then(parseXML)*/
 const BookType = new GraphQLObjectType({
     name: 'Book',
     description: '...',
-    fields: ()=>({
+    fields: () => ({
         title: {
             type: GraphQLString,
-            resolve: xml => xml.title[0]
+            resolve: xml => {
+                logger.info("book title xml", JSON.stringify(xml, null, "\t"))
+                const title=xml.GoodreadsResponse.book[0].title[0]
+                logger.info("book title", title)
+                return title;
+            }
         },
         isbn: {
             type: GraphQLString,
-            resolve: xml => xml.isbn[0]
+            resolve: xml => {
+                logger.info("book isbn xml", xml)
+                const isbn = xml.GoodreadsResponse.book[0].isbn[0]
+                logger.info("book isbn", isbn)
+                return isbn
+            }
         }
     })
 })
@@ -43,9 +48,20 @@ const AuthorType = new GraphQLObjectType({
         books: {
             type: new GraphQLList(BookType),
             resolve: xml => {
-                logger.info("author books resolve")
-                return xml.GoodreadsResponse.author[0].books[0].book
-
+                const ids = xml.GoodreadsResponse.author[0].books[0].book.map(elem => {
+                        logger.info("elem", elem);
+                        return elem.id[0]._
+                    }
+                )
+                logger.info("ids", ids)
+                return Promise.all(ids.map(id => {
+                        const url = `https://www.goodreads.com/book/show/${id}.xml?key=${apiKey}`
+                        logger.info(`requresting url`, url);
+                        return fetch(url)
+                            .then(response => response.text())
+                            .then(parseXML)
+                    }
+                ))
             }
         }
     })
